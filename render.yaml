@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: stamp-rally-site
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: APP_DEEPLINK_SCHEME
+        sync: false
+      - key: APP_STORE_URL
+        sync: false
+      - key: PLAY_STORE_URL
+        sync: false
