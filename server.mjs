@@ -119,6 +119,35 @@ const html = (res, status, body) => send(res, status, 'text/html; charset=utf-8'
 const json = (res, status, obj) => send(res, status, 'application/json', JSON.stringify(obj));
 const notFound = (res) => html(res, 404, page('見つかりません', '<h1>ページが見つかりません</h1><p><a href="/">トップへ</a></p>'));
 
+const accountDeletionPage = () => page(
+  'アカウント削除について｜スポットメモリー',
+  `<h1>アカウント削除について</h1>
+<p>位置情報アプリ「スポットメモリー」をご利用のお客様が、アカウントおよびそれに紐づくデータの削除をリクエストするための手順です。</p>
+
+<h2>アプリ内からアカウントを削除する方法</h2>
+<ol>
+<li>「スポットメモリー」アプリにログインする</li>
+<li>下部タブの「マイページ」を開く</li>
+<li>右上の設定（歯車）アイコンをタップする</li>
+<li>「アカウントを削除する」をタップする</li>
+<li>本人確認のためパスワードを入力し、確認ダイアログで「削除する」をタップする</li>
+</ol>
+<p>削除が完了すると、同じメールアドレス・パスワードで再びログインすることはできなくなります。</p>
+
+<h2>削除されるデータと保持期間</h2>
+<p>上記の操作を行うと、以下のデータが<strong>即時に完全削除</strong>されます（削除後に保持される期間はありません）。</p>
+<ul>
+<li>投稿したすべてのノート（テキスト・写真・位置情報・タグ）</li>
+<li>作成したフォルダ、共有フォルダのメンバー情報</li>
+<li>いいね・保存したノート・送受信した手紙</li>
+<li>プロフィール情報（表示名・アバター・生年月日等）およびプレミアム会員情報</li>
+<li>ログイン情報（メールアドレス・パスワード）を含むアカウント自体</li>
+</ul>
+
+<h2>アカウントを削除せずに一部データのみ削除したい場合</h2>
+<p>アカウント自体は残したまま、特定の投稿や情報のみ削除・訂正してほしい場合は、アプリ内のハンバーガーメニューにある「お問い合わせ」フォームから削除したい内容を添えてご連絡ください。内容を確認のうえ対応いたします。</p>`
+);
+
 async function serveFile(res, rel, cache) {
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if (!file.startsWith(PUBLIC_DIR + path.sep)) return notFound(res);
@@ -151,6 +180,7 @@ const server = http.createServer(async (req, res) => {
   const p = url.pathname;
   try {
     if (p === '/healthz') return send(res, 200, 'text/plain', 'ok');
+    if (req.method === 'GET' && p === '/account-deletion') return html(res, 200, accountDeletionPage());
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return html(res, 500, page('設定エラー', '<h1>設定エラー</h1><p>SUPABASE_URL / SUPABASE_ANON_KEY が未設定です。</p>'));
 
     if (req.method === 'GET' && p === '/') return html(res, 200, await listPage());
