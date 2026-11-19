@@ -68,6 +68,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .progress{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:0 0 8px;font-weight:700}
 .progress .num{font-family:var(--maru);font-size:24px;color:var(--main)}
 .progress .done{background:var(--main);color:#fff;border-radius:999px;font-size:13px;padding:2px 12px}
+.gridwrap.open{overflow:visible;overscroll-behavior:auto;max-height:none!important}
 .gridwrap{overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:14px;padding:8px;background:#fffdfb}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .cell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;min-width:0}

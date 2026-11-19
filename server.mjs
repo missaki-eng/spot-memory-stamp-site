@@ -181,6 +181,10 @@ const server = http.createServer(async (req, res) => {
   try {
     if (p === '/healthz') return send(res, 200, 'text/plain', 'ok');
     if (req.method === 'GET' && p === '/account-deletion') return html(res, 200, accountDeletionPage());
+    if (req.method === 'GET' && p.startsWith('/assets/')) {
+      return serveFile(res, p.slice(1), 'public, max-age=300');
+    }
+    if (req.method === 'GET' && p === '/demo') return serveFile(res, 'collect.html', 'no-store');
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return html(res, 500, page('設定エラー', '<h1>設定エラー</h1><p>SUPABASE_URL / SUPABASE_ANON_KEY が未設定です。</p>'));
 
     if (req.method === 'GET' && p === '/') return html(res, 200, await listPage());
@@ -193,9 +197,6 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && (m = p.match(/^\/c\/([^/]+)$/))) {
       return CODE_RE.test(m[1]) ? serveFile(res, 'collect.html', 'no-store') : notFound(res);
-    }
-    if (req.method === 'GET' && p.startsWith('/assets/')) {
-      return serveFile(res, p.slice(1), 'public, max-age=300');
     }
     if (req.method === 'GET' && (m = p.match(/^\/api\/rallies\/([^/]+)\/stamps$/))) {
       const device = url.searchParams.get('device') || '';

@@ -6,7 +6,10 @@ const el = (tag, cls, text) => {
   return e;
 };
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null);
+const safeUrl = (u) => (typeof u === 'string' && /^(https?:\/\/|data:image\/)/i.test(u) ? u : null);
+const IS_DEMO = location.pathname === '/demo';
+let demoData = null;
+let expandOnPage = false;
 
 function deviceId() {
   try {
@@ -41,7 +44,10 @@ function fail(title, body) {
 async function main() {
   const code = location.pathname.split('/').filter(Boolean).pop();
   let data;
-  try {
+  if (IS_DEMO) {
+    demoData = (await import('/assets/demo-data.js')).DEMO;
+    data = demoData.collect;
+  } else try {
     const res = await fetch('/api/collect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,6 +100,7 @@ function setup() {
   $('#summary').hidden = !state.spot.description;
   setupDownload();
   setupGacha();
+  if (IS_DEMO) $('#demoNote').hidden = false;
 }
 
 /* ---------- 思い出ガチャ ---------- */
@@ -123,6 +130,12 @@ async function drawMemory() {
   $('#gachaRun').hidden = false;
   const minWait = new Promise((r) => setTimeout(r, reduce ? 50 : 1500));
   let result;
+  if (IS_DEMO) {
+    await minWait;
+    const m = demoData.memories[Math.floor(Math.random() * demoData.memories.length)];
+    $('#gachaRun').hidden = true;
+    return showMemory((state.memory = m));
+  }
   try {
     const [res] = await Promise.all([
       fetch('/api/draw', {
@@ -232,9 +245,11 @@ function renderCard(root, opts = {}) {
     btn.type = 'button';
     btn.setAttribute('aria-expanded', 'false');
     btn.onclick = () => {
+      if (opts.onExpand) return opts.onExpand();
       const open = btn.getAttribute('aria-expanded') !== 'true';
       btn.setAttribute('aria-expanded', String(open));
       btn.textContent = open ? '閉じる' : 'すべてのスタンプを見る';
+      wrap.classList.toggle('open', open);
       wrap.style.maxHeight = open ? 'none' : collapsed + 'px';
       if (!open) wrap.scrollTop = 0;
     };
@@ -288,7 +303,7 @@ async function run() {
     const s2 = $('#s2');
     $('#cTitle').textContent = state.already ? 'このスタンプは獲得済みです' : 'スタンプを獲得しました！';
     $('#cSub').textContent = state.already ? 'スタンプカードを確認しましょう。' : 'この街の思い出を、ひとつ見つけました。';
-    renderCard($('#card3'), { pendingNew: !state.already });
+    renderCard($('#card3'), { pendingNew: !state.already, onExpand: () => { expandOnPage = true; skipNow(); } });
     showScene('s2');
     if (!state.already) {
       await sleep(1100);
@@ -308,10 +323,18 @@ async function run() {
 function toPage() {
   renderCard($('#card4'));
   $('#page').hidden = false;
+  if (expandOnPage) {
+    // トグルはレイアウト後に作られるので、2フレーム待ってから展開してカードの位置へ移動する
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const t = $('#card4 .toggle');
+      if (t) t.click();
+      $('.cardsec').scrollIntoView({ block: 'start' });
+    }));
+  }
   const stage = $('#stage');
   stage.classList.add('out');
   document.body.classList.remove('locked');
-  scrollTo(0, 0);
+  if (!expandOnPage) scrollTo(0, 0);
   setTimeout(() => (stage.hidden = true), 550);
 }
 
@@ -573,6 +596,7 @@ async function share() {
 }
 
 $('#share').onclick = openShare;
+$('#replay').onclick = () => location.reload();
 $('#closeSheet').onclick = closeShare;
 $('#doShare').onclick = share;
 $('#doSave').onclick = download;
